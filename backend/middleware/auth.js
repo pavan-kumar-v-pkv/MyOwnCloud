@@ -16,4 +16,5 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-module.exports = authenticateToken; // Export the middleware to be used in routes
+// Export the middleware to be used in routes
+module.exports = authenticateToken; // <-- This is what 'auth' refers to

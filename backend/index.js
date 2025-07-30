@@ -23,6 +23,10 @@ app.get('/', (req, res) => {
     res.send({message: "Welcome to MyOwnCloud!"});
 });
 
+// Load the file upload routes
+const fileRoutes = require('./routes/file'); // Import file upload routes
+app.use('/api', fileRoutes); // Use the file routes under the /api path,
+
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
