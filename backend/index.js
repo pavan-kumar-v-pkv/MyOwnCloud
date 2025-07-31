@@ -1,6 +1,6 @@
 const express = require('express'); // Import the Express framework for building web applications
 const dotenv = require('dotenv'); // to load environment variables from .env file
-const { PrismaClient } = require('@prisma/client'); // Prisma ORM to access the database
+const { PrismaClient } = require('./generated/prisma'); // Prisma ORM to access the database
 
 dotenv.config(); // Load environment variables from .env file
 const app = express(); // Initialize Express application

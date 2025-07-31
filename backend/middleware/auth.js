@@ -4,15 +4,19 @@ const JWT_SECRET = process.env.JWT_SECRET; // Get the JWT secret from environmen
 
 // Middleware to verify token
 const authenticateToken = (req, res, next) => {
-    const authHeader = req.headers['authorization']; // Get the 'authorization' header
-    const token = authHeader?.split(' ')[1]; // Extract the token from the header (format: Bearer <token>)
-
+    // 1. Get the 'authorization' header
+    const authHeader = req.headers['authorization']; // authHeader = "Bearer eyJhbGciOiJIUzI1NiIs..."
+    // 2. Extract the token from the header (format: Bearer <token>)
+    const token = authHeader?.split(' ')[1]; // token = "eyJhbGciOiJIUzI1NiIs..."
+    // 3. Check if token exists
     if (!token) return res.status(401).json({ message: 'Token missing' }); // If no token is provided, return 401 Unauthorized
-
+    // 4. Verify the token and decode it
     jwt.verify(token, JWT_SECRET, (err, user) => { // validate the token
         if (err) return res.status(403).json({ message: 'Invalid token'}); // If token is invalid, return 403 Forbidden
-        req.user = user; // Attach the user information to the request object
-        next(); // Call the next middleware or route handler
+        // 5. If valid, attach decoded data to request
+        req.user = user; // user = { userId: 123, iat: ..., exp: ... }
+        // 6. Continue to next middleware/route
+        next(); 
     });
 };
 

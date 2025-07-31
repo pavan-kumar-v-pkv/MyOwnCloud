@@ -27,4 +27,8 @@ const upload = multer({ storage }); // Create a multer instance with the defined
 //   Value: (choose file)
 router.post('/upload', auth, upload.single('file'), uploadFile);
 
+const { listUserFile, downloadFile } = require('../controllers/fileController'); // Import file controller functions
+router.get('/files', auth, listUserFile); // GET /api/files - requires login, lists all files for the authenticated user
+router.get('/files/:id', auth, downloadFile); // GET /api/files/:id
+
 module.exports = router; // Export the router to be used in the main app

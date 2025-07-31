@@ -1,5 +1,5 @@
 // Contains the business logic of uploading files.
-const { PrismaClient } = require('@prisma/client'); // to interact with the database via Prisma
+const { PrismaClient } = require('../generated/prisma'); // to interact with the database via Prisma
 const prisma = new PrismaClient(); // create a new Prisma client instance
 
 const path = require('path'); // built-in Node.js module for handling file paths and operations
@@ -39,5 +39,49 @@ exports.uploadFile = async (req, res) => {
     } catch (error) {
         console.error('Error uploading file:', error);
         res.status(500).json({ message: 'Internal server error: Upload failed' });
+    }
+};
+
+exports.listUserFile = async (req, res) => {
+    const userId = req.user.userId; // JWT middleware sets req.user, which contains userId
+
+    try {
+        const files = await prisma.file.findMany({
+            where: { userId }, // filter files by the userId
+            select: {
+                id: true,          // include file ID
+                filename: true,    // include original file name
+                mimetype: true,    // include file type
+                size: true,        // include file size
+                createdAt: true    // include creation date of the file
+            }
+        });
+        res.json({ files });    // return the list of files
+    } catch (err) {
+        console.error('Error listing files:', err);
+        res.status(500).json({ message: 'Internal server error: Unable to list files' });
+    }
+};
+
+exports.downloadFile = async (req, res) => {
+    const userId = req.user.userId; // JWT middleware sets req.user, which contains userId
+    const fileId = parseInt(req.params.id); // get file ID from request parameters
+
+    try {
+        const file = await prisma.file.findUnique({ where: { id: fileId }}); // find the file by ID
+        // Check if the file exists and belongs to the user
+        if(!file) return res.status(404).json({ message: 'File not found' });
+
+        // check ownership
+        if(file.userId !== userId) {
+            return res.status(403).json({ message: 'Access denied: You do not own this file' });
+        }
+
+        // send file
+        const filePath = path.resolve(file.filepath); // resolve the full path to the file
+        res.download(filePath, file.filename); // send the file to the client with its original name
+    } catch(err){
+        console.error('Error downloading file:', err);
+        res.status(500).json({ message: 'Internal server error: Unable to download file' });
     }
 };

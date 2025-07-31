@@ -1,6 +1,6 @@
 // Main business logic for user authentication
 
-const { PrismaClient } = require('@prisma/client'); // Import Prisma ORM to access the database
+const { PrismaClient } = require('../generated/prisma'); // Import Prisma ORM to access the database
 const bcrypt = require('bcrypt'); // Import bcrypt for hashing passwords
 const jwt = require('jsonwebtoken'); // Import jsonwebtoken for creating JWTs
 
@@ -34,16 +34,16 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
     const { email, password } = req.body; // extract email and password from request body
 
-    // Find the user by email
+    // 1. Find the user by email
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return res.status(404).json({message: 'User not found with this email'});
 
-    // Compare the provided password with the stored hashed password
+    // 2. Compare the provided password with the stored hashed password
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({message: 'Invalid password'});
 
-    // Create a JWT token with user ID and email
+    // 3. Create a JWT token with user ID and email
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '1h' }); // token expires in 1 hour
 
-    res.json({ token }); // send the token back to the client
+    res.json({ token }); // 4. send the token back to the client
 };
