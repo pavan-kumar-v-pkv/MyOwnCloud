@@ -5,6 +5,8 @@ const prisma = new PrismaClient(); // create a new Prisma client instance
 const path = require('path'); // built-in Node.js module for handling file paths and operations
 const fs = require('fs'); // built-in Node.js module for file system operations
 
+const crypto = require('crypto'); // built-in Node.js module for cryptographic functions
+
 exports.uploadFile = async (req, res) => {
     const userId = req.user.userId; // JWT middleware sets req.user, which contains userId
 
@@ -84,4 +86,44 @@ exports.downloadFile = async (req, res) => {
         console.error('Error downloading file:', err);
         res.status(500).json({ message: 'Internal server error: Unable to download file' });
     }
+};
+
+// Helper function to generate a shareable link for the file to download    
+exports.generateShareLink = async(req, res) => {
+    const userId = req.user.userId; // JWT middleware sets req.user, which contains userId
+    const fileId = parseInt(req.params.id); // get file ID from request parameters
+
+    const file = await prisma.file.findUnique({ where: { id: fileId }});
+    if(!file) return res.status(404).json({ message: 'File not found' });
+
+    if(file.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied: You do not own this file' });
+    }
+
+    // Generate a unique token for the shareable link
+    const token = crypto.randomBytes(16).toString('hex'); // generate a random token
+
+    const link = await prisma.shareLink.create({
+        data: {
+            token, // store the generated token
+            file: { connect: { id: fileId}}, // associate the link with the file
+        }
+    });
+
+    res.json({ shareableUrl: `http://localhost:8000/public/${token}` }); // return the shareable URL
+};
+
+// Public route to download shared files using the token
+exports.downloadPublicFile = async (req, res) => {
+    const token = req.params.token; // get the token from the request parameters
+
+    const link = await prisma.shareLink.findUnique({
+        where: { token }, // find the share link by token
+        include: { file: true } // include the associated file details
+    });
+
+    if(!link) return res.status(404).json({ message: 'Invalid or expired share link' });
+
+    const filePath = path.resolve(link.file.filepath); // resolve the full path to the file
+    res.download(filePath, link.file.filename); // send the file to the client with its original name
 };

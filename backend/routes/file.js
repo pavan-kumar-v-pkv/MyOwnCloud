@@ -5,6 +5,7 @@ const router = express.Router(); // Create a new router instance
 const multer = require('multer'); // Middleware for handling multipart/form-data, used for file uploads
 const auth = require('../middleware/auth'); // Custom middleware for authentication
 const { uploadFile } = require('../controllers/fileController'); // Import the file upload controller
+const { generateShareLink, downloadPublicFile } = require('../controllers/fileController'); // Import file controller functions
 
 // Configure multer for file storage in /uploads directory
 const storage = multer.diskStorage({
@@ -30,5 +31,6 @@ router.post('/upload', auth, upload.single('file'), uploadFile);
 const { listUserFile, downloadFile } = require('../controllers/fileController'); // Import file controller functions
 router.get('/files', auth, listUserFile); // GET /api/files - requires login, lists all files for the authenticated user
 router.get('/files/:id', auth, downloadFile); // GET /api/files/:id
+router.post('/files/:id/share', auth, generateShareLink); // POST /api/files/:id/share - generate share link for a file
 
 module.exports = router; // Export the router to be used in the main app

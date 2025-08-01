@@ -27,6 +27,8 @@ app.get('/', (req, res) => {
 const fileRoutes = require('./routes/file'); // Import file upload routes
 app.use('/api', fileRoutes); // Use the file routes under the /api path,
 
+app.get('/public/:token', require('./controllers/fileController').downloadPublicFile); // Public route to download shared files using the token
+
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
