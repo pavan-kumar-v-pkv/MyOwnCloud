@@ -1,11 +1,18 @@
 const express = require('express'); // Import the Express framework for building web applications
 const dotenv = require('dotenv'); // to load environment variables from .env file
+const cors = require('cors'); // Import CORS middleware
 const { PrismaClient } = require('./generated/prisma'); // Prisma ORM to access the database
 
 dotenv.config(); // Load environment variables from .env file
 const app = express(); // Initialize Express application
 const prisma = new PrismaClient(); // Create a new Prisma DB client instance
 const PORT = process.env.PORT || 8000; // define the port for the server
+
+// Enable CORS for all routes
+app.use(cors({
+    origin: 'http://localhost:3000', // Allow requests from React app
+    credentials: true
+}));
 
 // Middleware to parse JSON bodies
 app.use(express.json());
