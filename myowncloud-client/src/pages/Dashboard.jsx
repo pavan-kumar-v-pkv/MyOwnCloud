@@ -449,7 +449,7 @@ export default function Dashboard() {
                                 </div>
                                 {/* Folder selection dropdown inside form */}
                                 <div className="mb-2 mt-4">
-                                    <label className="block mb-1 font-medium">Select Folder (optional):</label>
+                                    <label className="block mb-1 font-medium text-gray-900 dark:text-gray-100">Select Folder (optional):</label>
                                     <select 
                                         value={selectedFolderId}
                                         onChange={(e) => {
@@ -504,7 +504,7 @@ export default function Dashboard() {
                                     onChange={handleSelectAll}
                                     className="mr-2"
                                 />
-                                <span className="mr-4">Select All ({selectedFileIds.length} selected)</span>
+                                <span className="mr-4 text-gray-900 dark:text-gray-100">Select All ({selectedFileIds.length} selected)</span>
                                 <button
                                     onClick={handleBulkDelete}
                                     disabled={selectedFileIds.length === 0}
