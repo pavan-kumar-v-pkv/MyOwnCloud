@@ -13,8 +13,11 @@ model User {
   name      String
   email     String   @unique
   password  String
+  role      String   @default("viewer") // admin | editor | viewer
   createdAt DateTime @default(now())
   files     File[]
+  folders   Folder[]
+  permissions FilePermission[] 
 }
 
 model File {
@@ -24,9 +27,36 @@ model File {
   mimetype  String
   size      Int
   createdAt DateTime @default(now())
+  folder    Folder?  @relation(fields: [folderId], references: [id])
+  folderId  Int?
   userId    Int
   user      User     @relation(fields: [userId], references: [id])
   shareLinks ShareLink[]
+  permissions FilePermission[]
+  thumbnailPath String?
+}
+
+model FilePermission {
+  id        Int     @id @default(autoincrement())
+  file      File    @relation(fields: [fileId], references: [id])
+  fileId    Int     
+  user      User    @relation(fields: [userId], references: [id])
+  userId    Int
+  permission  String  // "view" | "download" | "edit"
+  createdAt DateTime @default(now())
+
+  @@unique([fileId, userId])
+}
+
+model Folder {
+  id        Int      @id @default(autoincrement())
+  name      String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  parent    Folder?  @relation("FolderParent", fields: [parentId], references: [id])
+  parentId  Int?      // For nesting
+  children  Folder[] @relation("FolderParent")
+  files     File[]
 }
 
 model ShareLink {

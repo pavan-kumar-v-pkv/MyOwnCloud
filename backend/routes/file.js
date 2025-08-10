@@ -1,11 +1,18 @@
-// Defines the API endpoint for file uploads.
 const express = require('express'); // Express framework for building web applications
 const router = express.Router(); // Create a new router instance
+const path = require('path'); // For working with file paths
 
 const multer = require('multer'); // Middleware for handling multipart/form-data, used for file uploads
 const auth = require('../middleware/auth'); // Custom middleware for authentication
-const { uploadFile } = require('../controllers/fileController'); // Import the file upload controller
-const { generateShareLink, downloadPublicFile } = require('../controllers/fileController'); // Import file controller functions
+const { 
+    uploadFiles, 
+    downloadZip, 
+    generateShareLink, 
+    downloadPublicFile,
+    bulkDeleteFiles,
+    listUserFile,
+    downloadFile
+} = require('../controllers/fileController'); // Import all file controller functions
 
 // Configure multer for file storage in /uploads directory
 const storage = multer.diskStorage({
@@ -26,11 +33,19 @@ const upload = multer({ storage }); // Create a multer instance with the defined
 // form-data:
 //   Key: file
 //   Value: (choose file)
-router.post('/upload', auth, upload.single('file'), uploadFile);
+router.post('/upload', auth, upload.array('files', 10), uploadFiles);
 
-const { listUserFile, downloadFile } = require('../controllers/fileController'); // Import file controller functions
 router.get('/files', auth, listUserFile); // GET /api/files - requires login, lists all files for the authenticated user
 router.get('/files/:id', auth, downloadFile); // GET /api/files/:id
 router.post('/files/:id/share', auth, generateShareLink); // POST /api/files/:id/share - generate share link for a file
+// route to serve thumbnails
+router.get('/thumbnails/:filename', (req, res) => {
+    const thumbnailPath = path.join(__dirname, '../uploads/thumbnails', req.params.filename);
+    res.sendFile(thumbnailPath);
+});
+// route to download multiple files as zip
+router.post('/download-zip', auth, downloadZip);
+// route to bulk delete files
+router.post('/bulk-delete', auth, bulkDeleteFiles);
 
 module.exports = router; // Export the router to be used in the main app
