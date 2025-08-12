@@ -85,51 +85,6 @@ exports.uploadFiles = async (req, res) => {
     }
 };
 
-// THUMBNAIL FUNCTION DISABLED FOR DEBUGGING
-// async function generateThumbnail(filePath, mimetype, destPath){
-//     try {
-//         // Ensure the thumbnails directory exists
-//         const thumbnailDir = path.dirname(destPath);
-//         if (!fs.existsSync(thumbnailDir)) {
-//             fs.mkdirSync(thumbnailDir, { recursive: true });
-//         }
-
-//         if (mimetype.startsWith('image/')) {
-//             // generate image thumbnail
-//             await sharp(filePath).resize(200, 200, { fit: 'inside' }).toFile(destPath);
-//             return destPath;
-//         } else if (mimetype === 'application/pdf') {
-//             // generate PDF thumbnail (first page as PNG) using pdf-poppler
-//             const Poppler = require('pdf-poppler');
-//             const options = {
-//                 format: 'png',
-//                 out_dir: path.dirname(destPath),
-//                 out_prefix: path.basename(destPath, path.extname(destPath)),
-//                 page: 1,
-//                 scale: 1024 // higher scale for better quality, then resize
-//             };
-//             try {
-//                 await Poppler.convert(filePath, options);
-//                 // pdf-poppler will output as out_dir/out_prefix-1.png
-//                 const generatedPath = path.join(options.out_dir, options.out_prefix + '-1.png');
-//                 // Resize to thumbnail size using sharp
-//                 await sharp(generatedPath).resize(200, 200, { fit: 'inside' }).toFile(destPath);
-//                 // Optionally, delete the original generatedPath file
-//                 fs.unlink(generatedPath, () => {});
-//                 return destPath;
-//             } catch (err) {
-//                 console.error('Error generating PDF thumbnail:', err);
-//                 return null;
-//             }
-//         }
-//         return null; // no thumbnail for other file types
-//     } catch (error) {
-//         console.error('Error generating thumbnail:', error);
-//         return null; // Return null if thumbnail generation fails
-//     }
-// }
-
-
 exports.listUserFile = async (req, res) => {
     console.log('=== listUserFile API called ===');
     const userId = req.user.userId; // JWT middleware sets req.user, which contains userId
@@ -277,4 +232,55 @@ exports.bulkDeleteFiles = async(req, res) => {
         console.error('Error deleting files:', err);
         res.status(500).json({ message: 'Internal server error: Unable to delete files' });
     }
+};
+
+// Grant File Permissions
+exports.grantFilePermission = async (req, res) => {
+    const { userId, permission } = req.body; // get userId and permission from request body of target user
+    const fileId = parseInt(req.params.id); // get file ID from request parameters
+    const ownerId = req.user.userId; // JWT middleware sets req.user, which contains userId of the owner
+
+    // Validate permission type
+    if (!['view', 'download', 'edit'].includes(permission)) {
+        return res.status(400).json({ message: 'Invalid permission type' });
+    }
+
+    // check if the requester owns the file
+    const file = await prisma.file.findUnique({ where: { id: fileId  } });
+    if(!file || file.userId !== ownerId) {
+        return res.status(403).json({ message: 'Access denied: You do not own this file' });
+    }
+
+    // Upsert permission
+    const perm = await prisma.filePermission.upsert({
+        where: { fileId_userId: { fileId, userId } }, // unique constraint on fileId and userId
+        update: { permission }, // update permission
+        create: { fileId, userId, permission } // create new permission
+    });
+
+    res.json({
+        message: 'File permission updated successfully',
+        data: perm
+    });
+};
+
+exports.revokeFilePermission = async (req, res) => {
+    const { userId } = req.body; // get userId from request body of target user
+    const fileId = parseInt(req.params.id); // get file ID from request parameters
+    const ownerId = req.user.userId; // JWT middleware sets req.user, which contains userId of the owner
+
+    // check if the requester owns the file
+    const file = await prisma.file.findUnique({ where: { id: fileId } });
+    if(!file || file.userId !== ownerId) {
+        return res.status(403).json({ message: 'Access denied: You do not own this file' });
+    }
+
+    // Revoke permission
+    await prisma.filePermission.deleteMany({
+        where: { fileId_userId: { fileId, userId } }
+    });
+
+    res.json({
+        message: 'File permission revoked successfully'
+    });
 };
