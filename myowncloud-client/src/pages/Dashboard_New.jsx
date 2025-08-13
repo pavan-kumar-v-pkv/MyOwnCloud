@@ -185,19 +185,15 @@ export default function Dashboard() {
                 headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
             });
             console.log("Files response:", res.data);
-            // Handle the correct response structure: { files: [...] }
-            const filesData = Array.isArray(res.data.files) ? res.data.files : (Array.isArray(res.data) ? res.data : []);
-            setFiles(filesData);
+            setFiles(res.data);
         } catch (err) {
             console.error("Error fetching files:", err);
-            // Set empty array on error to prevent crashes
-            setFiles([]);
             alert("Failed to fetch files. Please check your connection and try again.");
         }
     };
 
     // Helper: filter files by current folder - FIXED VERSION
-    const visibleFiles = Array.isArray(files) && currentFolderId
+    const visibleFiles = currentFolderId
         ? files.filter(f => {
             // Handle both number and string comparisons to ensure compatibility
             const fileFolderId = f.folderId;
@@ -212,9 +208,9 @@ export default function Dashboard() {
             
             return matches;
         })
-        : Array.isArray(files) ? files.filter(f => !f.folderId || f.folderId === null) : [];
+        : files.filter(f => !f.folderId || f.folderId === null);
     
-    console.log("DEBUGGING: Current folder ID:", currentFolderId, "(type:", typeof currentFolderId, "), total files:", Array.isArray(files) ? files.length : 0, "visible files count:", visibleFiles.length);
+    console.log("DEBUGGING: Current folder ID:", currentFolderId, "(type:", typeof currentFolderId, "), total files:", files.length, "visible files count:", visibleFiles.length);
     console.log("DEBUGGING: Visible files:", visibleFiles.map(f => ({ id: f.id, filename: f.filename, folderId: f.folderId })));
 
     const fetchUserInfo = async () => {
@@ -382,7 +378,7 @@ export default function Dashboard() {
                 />
                 
                 {/* Main Layout with Sidebar and Content */}
-                <div className="flex h-screen"> {/* pt-16 to account for fixed header */}
+                <div className="flex h-screen pt-16"> {/* pt-16 to account for fixed header */}
                     
                     {/* Left Sidebar */}
                     <Sidebar
