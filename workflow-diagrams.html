@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyOwnCloud - Workflow Diagrams</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 { color: #333; }
+        .diagram { margin: 20px 0; }
+        .mermaid { 
+            text-align: center; 
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>MyOwnCloud - Workflow Diagrams</h1>
+    
+    <h2>System Architecture Overview</h2>
+    <div class="mermaid">
+graph TB
+    A[User Browser] --> B[React Frontend<br/>Port 80]
+    B --> C[Node.js Backend<br/>Port 8000]
+    C --> D[PostgreSQL Database<br/>Port 5432]
+    C --> E[File System<br/>./uploads]
+    C --> F[Groq AI API<br/>External]
+    
+    subgraph "Docker Network"
+        B
+        C
+        D
+    end
+    
+    style A fill:#e1f5fe
+    style B fill:#f3e5f5
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#fce4ec
+    style F fill:#fff8e1
+    </div>
+
+    <h2>User Journey Flow</h2>
+    <div class="mermaid">
+journey
+    title User Journey in MyOwnCloud
+    section Authentication
+      Visit Homepage: 5: User
+      Register Account: 4: User
+      Login: 5: User
+    section File Management
+      Upload Files: 5: User
+      View File List: 5: User
+      Create Folders: 4: User
+      Organize Files: 4: User
+    section AI Features
+      Analyze Files: 5: User, AI
+      Search Content: 5: User, AI
+      View Insights: 5: User
+    section Sharing
+      Generate Share Link: 4: User
+      Share with Others: 5: User, Others
+      Access Shared Files: 5: Others
+    </div>
+
+    <h2>Database Schema (ERD)</h2>
+    <div class="mermaid">
+erDiagram
+    USER {
+        int id PK
+        string email UK
+        string name
+        string password
+        timestamp createdAt
+        string role
+    }
+    
+    FOLDER {
+        int id PK
+        string name
+        int userId FK
+        int parentId FK
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    
+    FILE {
+        int id PK
+        string filename
+        string originalName
+        string path
+        int size
+        string mimeType
+        int userId FK
+        int folderId FK
+        string extractedText
+        string aiCategory
+        string aiTags
+        string aiSummary
+        string thumbnailPath
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    
+    SHARELINK {
+        int id PK
+        int fileId FK
+        string token UK
+        timestamp expiresAt
+        timestamp createdAt
+    }
+    
+    FILEPERMISSION {
+        int id PK
+        int fileId FK
+        int userId FK
+        string permission
+        timestamp createdAt
+    }
+    
+    USER ||--o{ FOLDER : creates
+    USER ||--o{ FILE : uploads
+    FOLDER ||--o{ FOLDER : contains
+    FOLDER ||--o{ FILE : contains
+    FILE ||--o| SHARELINK : shares
+    FILE ||--o{ FILEPERMISSION : has
+    USER ||--o{ FILEPERMISSION : grants
+    </div>
+
+    <h2>AI Processing Sequence</h2>
+    <div class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant B as Backend
+    participant DB as Database
+    participant AI as Groq AI
+    participant FS as File System
+
+    U->>F: Upload file
+    F->>B: POST /api/files/upload
+    B->>FS: Save file to ./uploads
+    B->>DB: Store file metadata
+    B-->>F: Return file info
+    F-->>U: Show upload success
+    
+    U->>F: Click "Analyze" button
+    F->>B: POST /api/files/:id/analyze
+    
+    Note over B: Text Extraction Phase
+    alt PDF file
+        B->>B: Extract text with pdf-parse
+    else Image file
+        B->>B: OCR with Tesseract.js
+    else Text file
+        B->>B: Read file content
+    end
+    
+    Note over B,AI: AI Analysis Phase
+    B->>AI: Send text to Groq API
+    Note right of AI: Analyze for:<br/>- Category<br/>- Tags<br/>- Summary
+    AI-->>B: Return analysis results
+    
+    B->>DB: Update file with AI data
+    B-->>F: Return analysis results
+    F-->>U: Display AI insights
+    </div>
+
+    <h2>Deployment Workflow</h2>
+    <div class="mermaid">
+flowchart TD
+    A[Start Deployment] --> B{Docker Running?}
+    B -->|No| C[Start Docker]
+    B -->|Yes| D[Check Prerequisites]
+    C --> D
+    D --> E{.env exists?}
+    E -->|No| F[Create from .env.example]
+    E -->|Yes| G[Validate Environment]
+    F --> H[Configure API Keys]
+    H --> G
+    G --> I[Stop Existing Containers]
+    I --> J[Build Docker Images]
+    J --> K[Start Services]
+    K --> L[Wait for PostgreSQL]
+    L --> M[Wait for Backend]
+    M --> N[Wait for Frontend]
+    N --> O[Run DB Migrations]
+    O --> P[Health Checks]
+    P --> Q{All Services OK?}
+    Q -->|No| R[Show Logs & Exit]
+    Q -->|Yes| S[Deployment Success]
+    
+    style A fill:#e1f5fe
+    style S fill:#e8f5e8
+    style R fill:#ffebee
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            themeVariables: {
+                primaryColor: '#007acc',
+                primaryTextColor: '#333333',
+                primaryBorderColor: '#007acc',
+                lineColor: '#666666'
+            }
+        });
+    </script>
+</body>
+</html>

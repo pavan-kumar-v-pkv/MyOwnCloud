@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 8000; // define the port for the server
 
 // Enable CORS for all routes
 app.use(cors({
-    origin: 'http://localhost:3000', // Allow requests from React app
+    origin: ['http://localhost:3000', 'http://localhost', 'http://localhost:80'], // Allow requests from both dev and production
     credentials: true
 }));
 

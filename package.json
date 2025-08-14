@@ -1,0 +1,63 @@
+{
+  "name": "myowncloud",
+  "version": "1.0.0",
+  "description": "AI-Powered Personal File Storage with Smart Search and Categorization",
+  "main": "index.js",
+  "scripts": {
+    "install:all": "npm install && cd backend && npm install && cd ../myowncloud-client && npm install",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd myowncloud-client && npm start",
+    "build": "cd myowncloud-client && npm run build",
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd myowncloud-client && npm test -- --coverage --watchAll=false",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:restart": "docker-compose restart",
+    "deploy": "chmod +x deploy.sh && ./deploy.sh",
+    "db:migrate": "cd backend && npm run db:migrate",
+    "db:generate": "cd backend && npm run db:generate",
+    "db:seed": "cd backend && npm run db:seed",
+    "lint": "npm run lint:backend && npm run lint:frontend",
+    "lint:backend": "cd backend && npm run lint",
+    "lint:frontend": "cd myowncloud-client && npm run lint",
+    "format": "cd myowncloud-client && npm run format",
+    "docs:diagram": "python3 flow_diagram.py",
+    "health": "curl -f http://localhost:8000/ && curl -f http://localhost:3000/",
+    "clean": "rm -rf node_modules backend/node_modules myowncloud-client/node_modules",
+    "reset": "npm run clean && npm run install:all"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pavan-kumar-v-pkv/MyOwnCloud.git"
+  },
+  "keywords": [
+    "file-storage",
+    "ai-powered",
+    "groq",
+    "react",
+    "nodejs",
+    "postgresql",
+    "docker",
+    "cloud-storage",
+    "smart-search",
+    "ocr",
+    "categorization"
+  ],
+  "author": "Pavan Kumar V <pavankumarvpkv@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pavan-kumar-v-pkv/MyOwnCloud/issues"
+  },
+  "homepage": "https://github.com/pavan-kumar-v-pkv/MyOwnCloud#readme",
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}

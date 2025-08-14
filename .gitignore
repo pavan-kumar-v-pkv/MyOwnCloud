@@ -1,2 +1,37 @@
+# Environment variables
+.env
+
+# Node modules
 node_modules/
-.envbackend/uploads/
+backend/node_modules/
+myowncloud-client/node_modules/
+
+# Build outputs
+backend/dist/
+myowncloud-client/build/
+myowncloud-client/dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Uploads (user files)
+uploads/
+backend/uploads/
+
+# Database
+*.db
+*.sqlite
+
+# Prisma generated
+backend/generated/
+
+# IDE
+.vscode/
+.DS_Store
+
+# Screenshots (except architecture)
+*.png
+*.jpg
+*.jpeg
+!myowncloud_architecture.png
