@@ -7,7 +7,7 @@ const fs = require('fs'); // built-in Node.js module for file system operations
 
 const crypto = require('crypto'); // built-in Node.js module for cryptographic functions
 const archiver = require('archiver'); // library for creating zip files
-// THUMBNAIL LIBRARIES REMOVED FOR DEBUGGING
+
 // const sharp = require('sharp'); // library for image processing
 // const { PDFDocument } = require('pdf-lib') // library for pdf manipulation
 

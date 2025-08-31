@@ -24,7 +24,7 @@ const openai = new OpenAI({
     baseURL: "https://api.groq.com/openai/v1"
 });
 
-// Detect file type by content - FIXED for file-type v16
+// Detect file type by content and fallback to extension
 async function detectFileType(filePath) { 
     try {
         const buffer = await fs.promises.readFile(filePath); // Read file content
@@ -80,8 +80,8 @@ async function getEmbedding(text) {
     // In a production app, you'd use a service like OpenAI, Hugging Face, or local embeddings
     console.log("Embedding generation skipped - Groq doesn't support embedding models");
     return null; // Return null to skip embeddings
-    
-    // COMMENTED OUT - Original OpenAI embedding code
+
+    // Original OpenAI embedding code
     // const chunk = text.length > 30000 ? text.slice(0, 30000) : text;
     // const resp = await openai.embeddings.create({
     //     model: "text-embedding-ada-002",
