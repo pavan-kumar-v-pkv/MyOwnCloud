@@ -213,24 +213,84 @@ exports.bulkDeleteFiles = async(req, res) => {
     try {
         // Convert string IDs to integers if needed
         const parsedFileIds = fileIds.map(id => typeof id === 'string' ? parseInt(id) : id);
+        console.log('Parsed file IDs:', parsedFileIds);
         
-        // Delete the files from the database
-        const deleteResult = await prisma.file.deleteMany({
-            where: { 
-                id: { in: parsedFileIds },
-                userId: userId
+        // Use a transaction to ensure all operations succeed or fail together
+        const result = await prisma.$transaction(async (tx) => {
+            // Get the files to delete their physical files from the filesystem
+            const filesToDelete = await tx.file.findMany({
+                where: {
+                    id: { in: parsedFileIds },
+                    userId: userId
+                }
+            });
+            
+            console.log('Files found to delete:', filesToDelete.map(f => ({ id: f.id, filename: f.filename })));
+            
+            if (filesToDelete.length === 0) {
+                throw new Error('No files found to delete or user does not have permission');
             }
+            
+            const actualFileIds = filesToDelete.map(f => f.id);
+            console.log('Actual file IDs to delete:', actualFileIds);
+            
+            // First, delete any share links associated with these files
+            console.log('Deleting share links for files:', actualFileIds);
+            const shareLinksDeleted = await tx.shareLink.deleteMany({
+                where: {
+                    fileId: { in: actualFileIds }
+                }
+            });
+            console.log('Share links deleted:', shareLinksDeleted.count);
+            
+            // Then delete any file permissions associated with these files
+            console.log('Deleting file permissions for files:', actualFileIds);
+            const permissionsDeleted = await tx.filePermission.deleteMany({
+                where: {
+                    fileId: { in: actualFileIds }
+                }
+            });
+            console.log('File permissions deleted:', permissionsDeleted.count);
+            
+            // Finally, delete the files from the database
+            console.log('Deleting files from database');
+            const deleteResult = await tx.file.deleteMany({
+                where: { 
+                    id: { in: actualFileIds },
+                    userId: userId
+                }
+            });
+            console.log('Database delete result:', deleteResult);
+            
+            return { filesToDelete, deleteResult };
         });
         
-        console.log('Delete result:', deleteResult);
+        // Delete physical files from the filesystem (outside transaction)
+        const fs = require('fs');
+        for (const file of result.filesToDelete) {
+            try {
+                if (fs.existsSync(file.filepath)) {
+                    fs.unlinkSync(file.filepath);
+                    console.log('Deleted physical file:', file.filepath);
+                }
+                // Delete thumbnail if it exists
+                if (file.thumbnailPath && fs.existsSync(file.thumbnailPath)) {
+                    fs.unlinkSync(file.thumbnailPath);
+                    console.log('Deleted thumbnail:', file.thumbnailPath);
+                }
+            } catch (fileErr) {
+                console.error(`Error deleting physical file ${file.filename}:`, fileErr);
+                // Continue with next file even if one fails
+            }
+        }
         
         res.json({ 
             message: 'Files deleted successfully',
-            count: deleteResult.count
+            count: result.deleteResult.count
         });
     } catch (err) {
         console.error('Error deleting files:', err);
-        res.status(500).json({ message: 'Internal server error: Unable to delete files' });
+        res.status(500).json({ message: 'Internal server error: Unable to delete files', error: err.message });
     }
 };
 
